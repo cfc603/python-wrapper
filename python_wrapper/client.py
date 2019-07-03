@@ -1,8 +1,5 @@
-import getpass
 import os
 import requests
-
-from python_wrapper import PYTHON_WRAPPER_API_ENDPOINT
 
 
 # Maps certain function names to HTTP verbs
@@ -11,14 +8,6 @@ VERBS = {
     "read": "GET",
     "update": "PUT",
     "delete": "DELETE"
-}
-
-# A list of identifiers that should be extracted and placed into the url
-# string if they are passed into the kwargs.
-IDENTIFIERS = {
-    "console_id": "consoles",
-    "domain_name": "webapps",
-    "static_id": "static_files",
 }
 
 
@@ -31,27 +20,27 @@ class PythonClient(object):
     """
     A generic Python API client.
     """
+    additional_verbs = {}
+    api_endpoint = ""
     api_key = ""
     client = None
-    user = None
+    identifiers = {}
     path = []
 
-    def __init__(self, api_key=None, path=None, user=None, additional_verbs={},
-                 identifiers={}):
+    def __init__(self, api_key=None, path=None, api_endpoint="",
+                 additional_verbs={}, identifiers={}):
         """
         :param api_key: The API key.
         :param path: The current path constructed for this request.
-        :param user: username
         :param client: The HTTP client to use to make the request.
         :param additional_vervs: Map additional function name to HTTP verbs
-                                 without removing them from path
+            without removing them from path
         :params identifiers: A list of identifiers that should be extracted and
-                             placed into the url string if they are passed into
-                             the kwargs.
+            placed into the url string if they are passed into the kwargs.
         """
         self.api_key = api_key or os.environ["API_TOKEN"]
         self.path = path or []
-        self.user = user or getpass.getuser()
+        self.api_endpoint = api_endpoint
         self.additional_verbs = additional_verbs
         self.identifiers = identifiers
 
@@ -65,17 +54,17 @@ class PythonClient(object):
             return PythonClient(
                 self.api_key,
                 self.path + [attr],
-                self.user,
+                self.api_endpoint,
                 self.additional_verbs,
                 self.identifiers
             )
 
     def construct_request(self, **kwargs):
         """
-        :param kwargs: The arguments passed into the request. Valid values are:
-            "console_id", "domain_name", and "static_id" will be extracted and
-            placed into the url. "data" will be passed seperately. Remaining
-            kwargs will be passed as params into request.
+        :param kwargs: The arguments passed into the request.
+            "additional_verbs" will be extracted and placed into the url.
+            "data" will be passed seperately. Remaining kwargs will be passed
+            as params into request.
         """
         path = self.path[:]
 
@@ -99,10 +88,14 @@ class PythonClient(object):
         data = kwargs.pop("data", None)
 
         # Build url
-        url = PYTHON_WRAPPER_API_ENDPOINT.format(self.user)
-        url = url + "/".join(path) + "/"
+        url = self.api_endpoint + "/".join(self.get_path(path)) + "/"
 
         return url, method, data, kwargs
+
+    def get_path(self, path):
+        for segment in path:
+            path.append(path.pop().replace("_", "-"))
+        return path
 
     def make_request(self, url, method, token, **kwargs):
         """

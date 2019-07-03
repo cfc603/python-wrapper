@@ -1,13 +1,12 @@
 import pytest
 import responses
 
-from python_wrapper import PYTHON_WRAPPER_API_ENDPOINT
 from python_wrapper.client import PythonAPIError
 
 
 class PythonClientTestCase(object):
 
-    PYTHON_WRAPPER_API_ENDPOINT = PYTHON_WRAPPER_API_ENDPOINT.format("testuser")
+    API_ENDPOINT = "https://www.example.com/user/testuser/"
 
     def asserts(self, expected_url, method="GET", data=None):
         assert len(responses.calls) == 1
@@ -19,7 +18,7 @@ class PythonClientTestCase(object):
                 assert argument in call.response.request.body
 
     def get_url(self, url):
-        return self.PYTHON_WRAPPER_API_ENDPOINT + url
+        return self.API_ENDPOINT + url
 
 
 class TestMakeRequest(PythonClientTestCase):
@@ -83,15 +82,6 @@ class TestMakeRequest(PythonClientTestCase):
         url_path = "details/123/"
         responses.add(responses.GET, self.get_url(url_path))
         api_client(identifiers={"detail_id": "details"}).details(detail_id=123)
-        self.asserts(url_path)
-
-    @responses.activate
-    def test_make_request_params_get(self, api_client):
-        url_path = "details/?domain_name=www.test.com&python_version=python27"
-        responses.add(responses.GET, self.get_url(url_path))
-        api_client().details(
-            domain_name="www.test.com", python_version="python27"
-        )
         self.asserts(url_path)
 
     @responses.activate
