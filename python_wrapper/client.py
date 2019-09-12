@@ -27,7 +27,7 @@ class PythonClient(object):
     identifiers = {}
     path = []
 
-    def __init__(self, api_key=None, path=None, api_endpoint="",
+    def __init__(self, api_key=None, path=None, headers=None, api_endpoint="",
                  additional_verbs={}, identifiers={}):
         """
         :param api_key: The API key.
@@ -54,6 +54,7 @@ class PythonClient(object):
             return PythonClient(
                 self.api_key,
                 self.path + [attr],
+                self.headers,
                 self.api_endpoint,
                 self.additional_verbs,
                 self.identifiers
@@ -91,6 +92,15 @@ class PythonClient(object):
         url = self.api_endpoint + "/".join(self.get_path(path)) + "/"
 
         return url, method, data, kwargs
+
+    def get_headers(self, token):
+        headers = {
+            "Authorization": f"Token {token}",
+            "User-Agent": "Python Client",
+        }
+        if self.headers:
+            headers.update(self.headers)
+        return headers
 
     def get_path(self, path):
         for segment in path:
