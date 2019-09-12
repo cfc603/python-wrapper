@@ -40,6 +40,7 @@ class PythonClient(object):
         """
         self.api_key = api_key or os.environ["API_TOKEN"]
         self.path = path or []
+        self.headers = headers
         self.api_endpoint = api_endpoint
         self.additional_verbs = additional_verbs
         self.identifiers = identifiers
@@ -118,10 +119,7 @@ class PythonClient(object):
         response = requests.request(
             method=method,
             url=url,
-            headers={
-                "Authorization": "Token {}".format(token),
-                "User-Agent": "Python Client",
-            },
+            headers=self.get_headers(token),
             **kwargs
         )
 
